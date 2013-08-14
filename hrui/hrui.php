@@ -53,6 +53,32 @@ function hrui_civicrm_install() {
     throw new CRM_Core_Exception('Failed to create settings for enable_components');
   }
   
+  // Disable Household contact type
+  $contactTypeID = CRM_Core_DAO::getFieldValue(
+                                               'CRM_Contact_DAO_ContactType',
+                                               'Household',
+                                               'id',
+                                               'name'
+                                               );
+  
+  if ($contactTypeID) {
+    $paramsContactType = array(
+                               'version' => 3,
+                               'name' => "Household",
+                               'id' => $contactTypeID,
+                               'is_active' => FALSE
+                               );
+    $resultContactType = civicrm_api('contact_type', 'create', $paramsContactType);
+    if (CRM_Utils_Array::value('is_error',  $resultContactType, FALSE)) {
+      $resetNavigation = false;
+      CRM_Core_Error::debug_var('contact_type-create result for is_active', $resultContactType);
+      throw new CRM_Core_Exception('Failed to disable contact type');
+    }
+  }
+  
+  // Reset Navigation  
+  CRM_Core_BAO_Navigation::resetNavigation();
+  
   // get a list of all tab options
   $options = CRM_Core_OptionGroup::values('contact_view_options', TRUE, FALSE);
   $tabsToUnset = array($options['Activities'], $options['Tags']);
